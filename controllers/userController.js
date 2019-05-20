@@ -1,7 +1,6 @@
 const Models = require('../models/models')
-const Login = require('../lib/login')
 
-exports.doGetUser = (req, res, next) => {
+exports.topPage = (req, res, next) => {
     const options = {
         where: {id : 1}
     }
@@ -15,4 +14,13 @@ exports.doGetUser = (req, res, next) => {
             console.log(err)
             res.render('../views/index.pug', {})
         })
+}
+
+exports.dashboard = (req, res, next) => {
+    // セッションにデータを保持
+    req.session.user = {
+        aaaa: 'aaaa',
+        bbbb: 'bbbb'
+    }
+    res.render('../views/dashboard.pug', {user: req.user})
 }

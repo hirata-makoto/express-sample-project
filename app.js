@@ -4,9 +4,8 @@ const path = require('path')
 const cookieParser = require('cookie-parser')
 const logger = require('morgan')
 const session = require('express-session')
-const passport = require('passport')
-const passport_local = require('passport-local')
-const authenticate = require('./lib/login')
+const Authenticator = require('./lib/authenticator')
+const flash = require("connect-flash");
 
 // router
 const router = require('./routes/routes.js')
@@ -22,30 +21,6 @@ app.set('view engine', 'pug')
 app.use(logger('dev'))
 
 // session
-app.use(passport.initialize())
-const LocalStrategy = passport_local.Strategy
-passport.use(new LocalStrategy((username, password, done) => {
-    const res = authenticate(username, password)
-    if(res){
-        return done(true)
-    }else{
-        return done(false)
-    }
-}))
-
-passport.use(new LocalStrategy((username, password, done) => {
-    authenticate({ username: username }, function(err, user) {
-        if (err) { return done(err) }
-        if (!user) {
-            return done(null, false, { message: 'Incorrect username.' })
-        }
-        if (!user.validPassword(password)) {
-            return done(null, false, { message: 'Incorrect password.' })
-        }
-        return done(null, user)
-    })}
-))
-
 app.use(session({
     secret: 'secret',
     resave: false,
@@ -57,21 +32,19 @@ app.use(session({
     }
 }))
 
-app.post('/',
-    passport.authenticate(authEnv, { successRedirect: '/' })
-)
+// passport
+Authenticator.initialize(app)
+Authenticator.setStrategy()
 
 // etc setup
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 app.use(express.static(path.join(__dirname, 'public')))
+// app.use(flash())
 
 // routing
 app.use('/', router)
-
-
-
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
